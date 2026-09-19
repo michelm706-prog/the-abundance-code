@@ -898,8 +898,9 @@
 </dialog>
 <script>
   (function () {
-    // Google Apps Script web app URL that saves each sign-up to the Google Sheet.
-    var WAITLIST_ENDPOINT = '';
+    // Sign-ups go to a Google Form, which writes each one to the linked Google Sheet.
+    var WAITLIST_FORM = 'https://docs.google.com/forms/d/e/1FAIpQLSewGq9QhTmZuaB5H7cmWg1I9Dbijmx1hOFYpWHSUwCBk-6utw/formResponse';
+    var FIELDS = { name: 'entry.249966913', email: 'entry.1836804940', situation: 'entry.2101142922' };
 
     var dlg = document.getElementById('waitlist-dialog'), form = document.getElementById('wl-form');
     var err = document.getElementById('wl-error'), btn = document.getElementById('wl-submit');
@@ -964,11 +965,12 @@
       if (!stage) return fail('Please let us know where you are right now.');
       if (form.website.value) return;
       btn.disabled = true; btn.textContent = 'Sending…';
-      fetch(WAITLIST_ENDPOINT, {
-        method: 'POST',
-        body: new URLSearchParams({ name: name, email: email, situation: stage, page: location.href })
-      }).then(function (r) { return r.json(); }).then(function (res) {
-        if (!res || res.result !== 'success') throw new Error();
+      var data = new URLSearchParams();
+      data.append(FIELDS.name, name);
+      data.append(FIELDS.email, email);
+      data.append(FIELDS.situation, stage);
+      // Google Forms doesn't allow reading the reply from another site, so a completed request counts as success.
+      fetch(WAITLIST_FORM, { method: 'POST', mode: 'no-cors', body: data }).then(function () {
         document.getElementById('wl-form-view').hidden = true;
         document.getElementById('wl-done-view').hidden = false;
       }).catch(function () {
